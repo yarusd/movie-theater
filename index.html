@@ -2048,13 +2048,13 @@
           <div className="navbar-inner">
             <div className="logo" onClick={() => nav("home")} data-testid="logo" aria-label="MovieTime logo">MOVIE<span>TIME</span></div>
             <div className="nav-links">
-              <button className={`nbtn${page === "home" ? " act" : ""}`} onClick={() => nav("home")} data-testid="nav-home">Home</button>
-              <button className={`nbtn${page === "movies" ? " act" : ""}`} onClick={() => nav("movies")} data-testid="nav-movies">All Movies</button>
+              <button className={`nbtn${page === "home" ? " act" : ""}`} onClick={() => nav("home")} data-testid="nav-home" aria-current={page === "home" ? "page" : undefined}>Home</button>
+              <button className={`nbtn${page === "movies" ? " act" : ""}`} onClick={() => nav("movies")} data-testid="nav-movies" aria-current={page === "movies" ? "page" : undefined}>All Movies</button>
               {user && <>
-                <button className={`nbtn${page === "orders" ? " act" : ""}`} onClick={() => nav("orders")} data-testid="nav-orders">
+                <button className={`nbtn${page === "orders" ? " act" : ""}`} onClick={() => nav("orders")} data-testid="nav-orders" aria-current={page === "orders" ? "page" : undefined}>
                   My Orders{userOrders.length > 0 && <span className="badge">{userOrders.length}</span>}
                 </button>
-                {user.role === "admin" && <button className={`nbtn${page === "admin" ? " act" : ""}`} onClick={() => nav("admin")} data-testid="nav-admin">Admin</button>}
+                {user.role === "admin" && <button className={`nbtn${page === "admin" ? " act" : ""}`} onClick={() => nav("admin")} data-testid="nav-admin" aria-current={page === "admin" ? "page" : undefined}>Admin</button>}
               </>}
             </div>
             <div className="nav-right">
@@ -2077,7 +2077,7 @@
       const isFav = favs.includes(movie.id);
       const badgeColor = BADGES[movie.badge] || "#9896a4";
       return (
-        <div className="mcard" data-testid={`movie-card-${movie.id}`} aria-label={`Movie: ${movie.title}`}>
+        <div className="mcard" data-testid={`movie-card-${movie.id}`} aria-label={`Movie: ${movie.title}`} data-title={movie.title} data-genre={movie.genre} data-year={movie.year}>
           <div className="mposter">
             <img src={movie.poster} alt={`${movie.title} poster`} loading="lazy" />
             {movie.badge && (
@@ -2229,6 +2229,7 @@
                     onClick={() => setTab(t.k)}
                     data-testid={`tab-${t.k}`}
                     style={{ whiteSpace: "nowrap" }}
+                    aria-selected={tab === t.k}
                   >{t.label} <span style={{ opacity: .6, fontSize: 12 }}>({t.count})</span></button>
                 ))}
               </div>
@@ -2289,7 +2290,7 @@
               </select>
             </div>
             <div className="pills mb24" style={{ justifyContent: "flex-start" }}>
-              {GENRES.map(g => <button key={g} className={`pill${genre === g ? " act" : ""}`} onClick={() => setGenre(g)} data-testid={`filter-genre-${g.toLowerCase()}`}>{g}</button>)}
+              {GENRES.map(g => <button key={g} className={`pill${genre === g ? " act" : ""}`} onClick={() => setGenre(g)} data-testid={`filter-genre-${g.toLowerCase()}`} aria-pressed={genre === g} data-active={genre === g}>{g}</button>)}
             </div>
             {list.length === 0 ? (
               <div className="emp"><div className="emp-ic">🎬</div><h3>No movies found</h3><p>Try a different search or genre</p></div>
@@ -2443,7 +2444,7 @@
               {dates.map(d => (
                 <button key={d.date} className={`datebtn${date === d.date ? " act" : ""}`}
                   onClick={() => { setDate(d.date); setSel([]) }}
-                  aria-label={`Date ${d.date}`} data-testid={`date-btn-${d.date}`}>
+                  aria-label={`Date ${d.date}`} data-testid={`date-btn-${d.date}`} aria-pressed={date === d.date} data-selected={date === d.date}>
                   <span className="dday">{d.label}</span>
                   <span className="dnum">{d.num}</span>
                 </button>
@@ -2454,7 +2455,7 @@
               {movie.showtimes.map(t => (
                 <button key={t} className={`stbtn${time === t ? " act" : ""}`}
                   onClick={() => { setTime(t); setSel([]) }}
-                  aria-label={`Time ${t}`} data-testid={`time-btn-${t.replace(":", "-")}`}>🕐 {t}</button>
+                  aria-label={`Time ${t}`} data-testid={`time-btn-${t.replace(":", "-")}`} aria-pressed={time === t} data-selected={time === t}>🕐 {t}</button>
               ))}
             </div>
           </div>
