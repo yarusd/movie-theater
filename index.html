@@ -1368,8 +1368,8 @@
     const INIT_MOVIES = [
       // ── NOW PLAYING — blockbusters in style of 2024-2025 ──
       {
-        id: 1, title: "Thunderbolts*", genre: "Action", rating: 7.6, duration: 126,
-        poster: "https://upload.wikimedia.org/wikipedia/en/3/39/Thunderbolts_poster.jpg",
+        id: 1, title: "ThunderBolts", genre: "Action", rating: 7.6, duration: 126,
+        poster: "https://th.bing.com/th/id/OSK.LWtWrR_OOJVN9Rduc088CfthZngBF_jSBCYsv7YvV3g?o=7rm=3&rs=1&pid=ImgDetMain&o=7&rm=3",
         description: "A ragtag group of antiheroes and reformed villains are reluctantly assembled by a shadowy government agency for a suicide mission — only to discover they're being set up as scapegoats.",
         cast: ["Florence Pugh", "Sebastian Stan", "David Harbour", "Julia Louis-Dreyfus"], year: 2025,
         showtimes: ["10:00", "13:00", "16:00", "19:00", "22:00"], userRatings: [{ userId: 1, rating: 4 }], isFeatured: true,
@@ -1378,7 +1378,7 @@
 
       {
         id: 2, title: "Mission: Impossible — The Final Reckoning", genre: "Action", rating: 8.1, duration: 169,
-        poster: "https://upload.wikimedia.org/wikipedia/en/9/98/Mission_Impossible_-_The_Final_Reckoning_poster.jpg",
+        poster: "https://image.tmdb.org/t/p/w500/iKPsC9EFUafRP9SrUznI61getVP.jpg",
         description: "Ethan Hunt and his IMF team race against time to track down a terrifying new weapon that threatens all of humanity before it falls into the wrong hands — in what may be their final mission.",
         cast: ["Tom Cruise", "Hayley Atwell", "Ving Rhames", "Simon Pegg", "Pom Klementieff"], year: 2025,
         showtimes: ["09:30", "12:45", "16:15", "19:30", "22:30"], userRatings: [{ userId: 2, rating: 5 }], isFeatured: true,
@@ -1396,7 +1396,7 @@
 
       {
         id: 4, title: "A Minecraft Movie", genre: "Animation", rating: 6.8, duration: 101,
-        poster: "https://upload.wikimedia.org/wikipedia/en/2/22/A_Minecraft_Movie_poster.jpg",
+        poster: "https://m.media-amazon.com/images/M/MV5BYzFjMzNjOTktNDBlNy00YWZhLWExYTctZDcxNDA4OWVhOTJjXkEyXkFqcGc@._V1_.jpg",
         description: "Four unlikely heroes are pulled through a mysterious portal into the Overworld — a bizarre, cubic wonderland that thrives on imagination. To get back home, they must master the art of crafting, building, and surviving.",
         cast: ["Jason Momoa", "Jack Black", "Emma Myers", "Jennifer Coolidge"], year: 2025,
         showtimes: ["10:00", "12:00", "14:00", "16:00", "18:00"], userRatings: [], isFeatured: false,
@@ -1515,7 +1515,7 @@
       // ── RECENT HITS (still in rotation) ──
       {
         id: 17, title: "Wicked", genre: "Drama", rating: 8.3, duration: 160,
-        poster: "https://upload.wikimedia.org/wikipedia/en/3/3d/Wicked_%282024_film%29_poster.jpg",
+        poster: "https://m.media-amazon.com/images/M/MV5BOWMwYjYzYmMtMWQ2Ni00NWUwLTg2MzAtYzkzMDBiZDIwOTMwXkEyXkFqcGc@._V1_.jpg",
         description: "The untold story of the witches of Oz: Elphaba, a misunderstood young woman with extraordinary powers, and Glinda, a popular young woman. Their unlikely friendship is tested by their diverging destinies.",
         cast: ["Cynthia Erivo", "Ariana Grande", "Jeff Goldblum", "Jonathan Bailey"], year: 2024,
         showtimes: ["11:30", "15:00", "18:30", "22:00"], userRatings: [{ userId: 1, rating: 5 }, { userId: 2, rating: 4 }], isFeatured: true,
@@ -1587,7 +1587,7 @@
 
       {
         id: 25, title: "Gladiator II", genre: "Action", rating: 7.2, duration: 148,
-        poster: "https://upload.wikimedia.org/wikipedia/en/8/85/Gladiator_II_%282024_film%29.jpg",
+        poster: "https://m.media-amazon.com/images/M/MV5BMWYzZTM5ZGQtOGE5My00NmM2LWFlMDEtMGNjYjdmOWM1MzA1XkEyXkFqcGc@._V1_.jpg",
         description: "Years after Maximus's death, a young man named Lucius is thrust into the violent world of the Roman Colosseum. As he fights for survival, he discovers a shocking connection to the past.",
         cast: ["Paul Mescal", "Denzel Washington", "Pedro Pascal", "Connie Nielsen", "Joseph Quinn"], year: 2024,
         showtimes: ["11:00", "14:30", "18:00", "21:30"], userRatings: [{ userId: 2, rating: 4 }], isFeatured: false,
@@ -1596,7 +1596,7 @@
 
       {
         id: 26, title: "Dune: Part Two", genre: "Sci-Fi", rating: 8.5, duration: 167,
-        poster: "https://upload.wikimedia.org/wikipedia/en/8/8e/Dune_Part_Two_poster.jpg",
+        poster: "https://m.media-amazon.com/images/M/MV5BNTc0YmQxMjEtODI5MC00NjFiLTlkMWUtOGQ5NjFmYWUyZGJhXkEyXkFqcGc@._V1_.jpg",
         description: "Paul Atreides unites with the Fremen while on a warpath of revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the known universe.",
         cast: ["Timothée Chalamet", "Zendaya", "Rebecca Ferguson", "Austin Butler", "Florence Pugh"], year: 2024,
         showtimes: ["11:30", "15:00", "18:30", "22:00"], userRatings: [{ userId: 1, rating: 5 }, { userId: 2, rating: 5 }], isFeatured: false,
@@ -1929,7 +1929,7 @@
     const seatPrice = t => t === "prm" ? 65 : t === "bck" ? 35 : 50;
 
     // ── STORAGE ───────────────────────────────────────────────
-    const DATA_VERSION = "v5.0";
+    const DATA_VERSION = "v8.0";
     if (localStorage.getItem("mt_version") !== DATA_VERSION) {
       ["mt_movies", "mt_seats"].forEach(k => localStorage.removeItem(k));
       localStorage.setItem("mt_version", DATA_VERSION);
