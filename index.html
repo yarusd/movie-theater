@@ -2578,9 +2578,12 @@
         const e = {};
         if (!email.trim()) e.email = "Email is required";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) e.email = "Invalid email format";
+
         if (!pwd) e.pwd = "Password is required";
-        else if (pwd.length < 6) e.pwd = "Password must be at least 6 characters";
-        setErrs(e); return Object.keys(e).length === 0;
+        else if (pwd.length < 6 || pwd.length > 50) e.pwd = "Password must be 6-50 characters";
+
+        setErrs(e); 
+        return Object.keys(e).length === 0;
       };
 
       const submit = () => {
@@ -2651,15 +2654,29 @@
 
       const val = () => {
         const e = {};
+        // ביטוי רגולרי לאנגלית ורווחים בלבד
+        const nameRegex = /^[a-zA-Z\s]+$/;
+
+        // וולידציה לשם (התאמה לשרת: 2-40)
         if (!f.name.trim()) e.name = "Full name is required";
+        else if (f.name.length < 2 || f.name.length > 40) e.name = "Name must be 2-40 characters";
+        else if (!nameRegex.test(f.name)) e.name = "Name must contain only English letters and spaces";
+
+        // וולידציה לאימייל
         if (!f.email.trim()) e.email = "Email is required";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Invalid email format";
         else if (TEST_USERS.find(u => u.email === f.email)) e.email = "Email already registered";
+
+        // וולידציה לסיסמה (התאמה לשרת: 6-50)
         if (!f.pwd) e.pwd = "Password is required";
-        else if (f.pwd.length < 6) e.pwd = "Password must be at least 6 characters";
+        else if (f.pwd.length < 6 || f.pwd.length > 50) e.pwd = "Password must be 6-50 characters";
+
+        // אישור סיסמה
         if (!f.conf) e.conf = "Please confirm your password";
         else if (f.conf !== f.pwd) e.conf = "Passwords do not match";
-        setErrs(e); return Object.keys(e).length === 0;
+
+        setErrs(e); 
+        return Object.keys(e).length === 0;
       };
 
       const submit = () => {
