@@ -1,7 +1,8 @@
 # 🎬 MovieTime - Cinematic Experience Platform
 
 **MovieTime** is a modern movie management and ticket booking application. It provides users with a seamless interface to browse a cinematic catalog, view detailed movie information, and book specific seats in an interactive theater map. The project is specifically engineered to be a **QA Automation Playground**, featuring synchronized validation logic between the frontend and backend.
-CLICK HERE ========================================================> https://yarusd.github.io/movie-theater/ <==============================================================================
+
+CLICK HERE ============> https://yarusd.github.io/movie-theater/ <============ CLICK HERE
 
 <img width="908" height="827" alt="image" src="https://github.com/user-attachments/assets/79b97596-a38d-4990-bd7d-9bc4b32a0cc3" />
 
