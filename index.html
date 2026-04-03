@@ -1921,11 +1921,13 @@
       return rows.flatMap(row =>
         Array.from({ length: 8 }, (_, i) => ({
           id: `${row}${i + 1}`, row, number: i + 1,
+          // שורה A יקרה, E זולה, כל השאר באמצע
           type: row === "A" ? "prm" : row === "E" ? "bck" : "std"
         }))
       );
     };
-
+    
+    // וודאי שפונקציית המחיר נראית ככה:
     const seatPrice = t => t === "prm" ? 65 : t === "bck" ? 35 : 50;
 
     // ── STORAGE ───────────────────────────────────────────────
@@ -2402,12 +2404,18 @@
 
       const valPay = () => {
         const e = {};
+        const nameRegex = /^[a-zA-Z\s]+$/;
+      
         if (!pay.cardName.trim()) e.cardName = "Card holder name required";
+        else if (!nameRegex.test(pay.cardName)) e.cardName = "English letters only (no Hebrew)";
+        
         if (!/^\d{16}$/.test(pay.cardNumber.replace(/\s/g, ""))) e.cardNumber = "Card number must be 16 digits";
         if (!/^\d{2}\/\d{2}$/.test(pay.expiry)) e.expiry = "Expiry must be MM/YY";
         if (!/^\d{3,4}$/.test(pay.cvv)) e.cvv = "CVV must be 3-4 digits";
-        setPayErr(e); return Object.keys(e).length === 0;
-      };
+        
+        setPayErr(e); 
+        return Object.keys(e).length === 0;
+    };
 
       const confirm = () => {
         if (!valPay()) return;
@@ -2654,31 +2662,23 @@
 
       const val = () => {
         const e = {};
-        // ביטוי רגולרי לאנגלית ורווחים בלבד
-        const nameRegex = /^[a-zA-Z\s]+$/;
-
-        // וולידציה לשם (התאמה לשרת: 2-40)
+        const nameRegex = /^[a-zA-Z\s]+$/; // אנגלית ורווחים בלבד
+      
         if (!f.name.trim()) e.name = "Full name is required";
         else if (f.name.length < 2 || f.name.length > 40) e.name = "Name must be 2-40 characters";
         else if (!nameRegex.test(f.name)) e.name = "Name must contain only English letters and spaces";
-
-        // וולידציה לאימייל
+      
         if (!f.email.trim()) e.email = "Email is required";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Invalid email format";
-        else if (TEST_USERS.find(u => u.email === f.email)) e.email = "Email already registered";
-
-        // וולידציה לסיסמה (התאמה לשרת: 6-50)
+      
         if (!f.pwd) e.pwd = "Password is required";
         else if (f.pwd.length < 6 || f.pwd.length > 50) e.pwd = "Password must be 6-50 characters";
-
-        // אישור סיסמה
-        if (!f.conf) e.conf = "Please confirm your password";
-        else if (f.conf !== f.pwd) e.conf = "Passwords do not match";
-
+      
+        if (f.conf !== f.pwd) e.conf = "Passwords do not match";
+      
         setErrs(e); 
         return Object.keys(e).length === 0;
       };
-
       const submit = () => {
         if (!val()) return;
         login({ id: Date.now(), email: f.email, name: f.name, role: "user" });
