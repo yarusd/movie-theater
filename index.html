@@ -2402,28 +2402,71 @@
 
       const total = selSeats.reduce((s, x) => s + seatPrice(x.type), 0);
 
-      const valPay = () => {
-        const e = {};
-        const nameRegex = /^[a-zA-Z\s]+$/;
+     const valPay = () => {
+          const e = {};
+          const nameRegex = /^[a-zA-Z\s]+$/;
       
-        if (!pay.cardName.trim()) e.cardName = "Card holder name required";
-        else if (!nameRegex.test(pay.cardName)) e.cardName = "English letters only (no Hebrew)";
-        
-        if (!/^\d{16}$/.test(pay.cardNumber.replace(/\s/g, ""))) e.cardNumber = "Card number must be 16 digits";
-        if (!/^\d{2}\/\d{2}$/.test(pay.expiry)) e.expiry = "Expiry must be MM/YY";
-        if (!/^\d{3,4}$/.test(pay.cvv)) e.cvv = "CVV must be 3-4 digits";
-        
-        setPayErr(e); 
-        return Object.keys(e).length === 0;
-    };
-
-      const confirm = () => {
-        if (!valPay()) return;
-        const o = addOrder({
-          movieId: movie.id, movieTitle: movie.title, moviePoster: movie.poster,
-          userId: user.id, userName: user.name, date, time, seats: selSeats.map(s => s.id), ticketCount: selSeats.length, totalPrice: total
-        });
-        setResult(o); setStep("success");
+          // 1. שם בעל הכרטיס
+          const trimmedName = pay.cardName.trim();
+          if (!trimmedName || trimmedName.length < 3) {
+              e.cardName = "Card holder name must be at least 3 English letters";
+          } else if (!nameRegex.test(trimmedName)) {
+              e.cardName = "Name must contain only English letters and spaces";
+          }
+      
+          // 2. בדיקת מספר כרטיס - מניעת חזרות שקופות מדי
+          const cleanCardNumber = pay.cardNumber.replace(/\s/g, "");
+          
+          const isTooObvious = (num) => {
+              // א. חסימת כל ה-4242 המפורסמים ודומיהם
+              const blacklist = ["4242424242424242", "1212121212121212", "1234123412341234"];
+              
+              // ב. בדיקה אם יש יותר מ-10 ספרות זהות ברצף (למשל 1111111111...)
+              const hasTooManyRepeats = /(.)\1{9,}/.test(num);
+              
+              // ג. בדיקת רצפים עולים/יורדים ארוכים מדי (למשל 123456789)
+              const sequence = "01234567890123456789";
+              const reverseSequence = "98765432109876543210";
+              const isLongSequence = sequence.includes(num.substring(0, 9)) || 
+                                     reverseSequence.includes(num.substring(0, 9));
+      
+              return blacklist.includes(num) || hasTooManyRepeats || isLongSequence;
+          };
+      
+          if (cleanCardNumber.length === 0) {
+              e.cardNumber = "Card number is required";
+          } else if (!/^\d{16}$/.test(cleanCardNumber)) {
+              e.cardNumber = "Card number must be exactly 16 digits";
+          } else if (isTooObvious(cleanCardNumber)) {
+              e.cardNumber = "Invalid card number pattern";
+          }
+      
+          // 3. בדיקת תוקף
+          if (!/^\d{2}\/\d{2}$/.test(pay.expiry)) {
+              e.expiry = "Expiry must be in MM/YY format";
+          } else {
+              const [month, year] = pay.expiry.split('/').map(Number);
+              const now = new Date();
+              const curMonth = now.getMonth() + 1;
+              const curYear = parseInt(now.getFullYear().toString().slice(-2));
+              const maxYear = curYear + 10;
+      
+              if (month < 1 || month > 12) {
+                  e.expiry = "Invalid month";
+              } else if (year < curYear || (year === curYear && month < curMonth)) {
+                  e.expiry = "Card has expired";
+              } else if (year > maxYear) {
+                  e.expiry = "Year is too far in the future";
+              }
+          }
+      
+          // 4. CVV
+          if (!/^\d{3}$/.test(pay.cvv)) {
+              e.cvv = "CVV must be exactly 3 digits";
+          }
+      
+          setPayErr(e);
+          return Object.keys(e).length === 0;
       };
 
       const rows = ["A", "B", "C", "D", "E"];
