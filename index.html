@@ -2433,6 +2433,7 @@
       const [pay, setPay] = useState({ cardName: "", cardNumber: "", expiry: "", cvv: "" });
       const [payErr, setPayErr] = useState({});
       const [result, setResult] = useState(null);
+      const [bookingErr, setBookingErr] = useState(""); // זה המשתנה החדש שלנו
 
       if (!movie || !user) return <div className="page"><div className="container"><div className="alert err">Please login and select a movie first.</div><button className="btn mt16" onClick={() => nav("login")}>Login</button></div></div>;
 
@@ -2508,9 +2509,15 @@
               }
           }
       
-          // 4. CVV
-          if (!/^\d{3}$/.test(pay.cvv)) {
+          // 4. CVV - חסימת תבניות פשוטות מדי (000, 111, 123)
+          const cvv = pay.cvv;
+          const isRepeated = /^(.)\1{2}$/.test(cvv); 
+          const isSequence = "0123456789".includes(cvv) || "9876543210".includes(cvv);
+
+          if (!/^\d{3}$/.test(cvv)) {
               e.cvv = "CVV must be exactly 3 digits";
+          } else if (isRepeated || isSequence) {
+              e.cvv = "Invalid CVV pattern - please use a secure code";
           }
       
           setPayErr(e);
@@ -2520,6 +2527,7 @@
      const rows = ["A", "B", "C", "D", "E"];
 
      const confirm = () => {
+        setBookingErr(""); // <--- זה התיקון! להוסיף כאן
         if (!valPay()) return;
         
         const orderData = {
@@ -2537,9 +2545,7 @@
         const result = addOrder(orderData);
         
         if (result.error) {
-          // אם היתה כפילות, אנחנו עוצרים ומזהירים את המשתמש
-          alert(result.message);
-          // מאפסים את הבחירה כדי שהמשתמש יראה מה תפוס עכשיו
+          setBookingErr(result.message); // במקום alert
           setSel([]); 
           return;
         }
@@ -2592,7 +2598,7 @@
             <div className="sttimes">
               {movie.showtimes.map(t => {
                 // 1. בדיקה האם התאריך שנבחר הוא היום
-                const isToday = date === new Date().toISOString().split("T")[0];
+                const isToday = date === new Date().toLocaleDateString('sv').split(' ')[0];
                 
                 // 2. פירוק שעת הסרט (למשל "10:30") למספרים
                 const [h, m] = t.split(":").map(Number);
@@ -2708,7 +2714,16 @@
                       aria-label="CVV" data-testid="input-cvv" />
                     {payErr.cvv && <div className="ferr">⚠ {payErr.cvv}</div>}
                   </div>
-                </div>
+                </div> {/* כאן נסגר ה-pgrid */}
+
+                {/* --- התחלת שלב 3: הצגת הודעת השגיאה ב-UI --- */}
+                {bookingErr && (
+                  <div className="alert err" data-testid="booking-error" style={{ marginBottom: '16px', marginTop: '8px' }}>
+                    ⚠ {bookingErr}
+                  </div>
+                )}
+                {/* ------------------------------------------- */}
+
                 <button className="btn ful" onClick={confirm} data-testid="btn-confirm-payment" aria-label="Confirm payment">
                   💳 Confirm & Pay ₪{total}
                 </button>
