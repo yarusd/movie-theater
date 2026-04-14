@@ -1920,16 +1920,24 @@
       const rows = ["A", "B", "C", "D", "E"];
       return rows.flatMap(row =>
         Array.from({ length: 8 }, (_, i) => ({
-          id: `${row}${i + 1}`, row, number: i + 1,
-          // שורה A יקרה, E זולה, כל השאר באמצע
-          type: row === "A" ? "prm" : row === "E" ? "bck" : "std"
+          id: `${row}${i + 1}`,
+          row,
+          number: i + 1,
+          // חלוקה ל-3 סוגים בלבד לפי השורות
+          type: row === "A" ? "prm" : // שורה A היא פרימיום
+                row === "E" ? "bck" : // שורה E היא אחורית
+                "std"                 // שורות B, C, D הן סטנדרט
         }))
       );
     };
     
     // וודאי שפונקציית המחיר נראית ככה:
-    const seatPrice = t => t === "prm" ? 65 : t === "bck" ? 35 : 50;
-
+// הפונקציה שמחשבת את המחיר הסופי ב-Frontend
+    const seatPrice = t => {
+      if (t === "prm") return 65; // שורה A
+      if (t === "bck") return 35; // שורה E
+      return 50;                  // שורות B, C, D (std)
+    };
     // ── STORAGE ───────────────────────────────────────────────
     const DATA_VERSION = "v8.0";
     if (localStorage.getItem("mt_version") !== DATA_VERSION) {
@@ -1993,11 +2001,22 @@
       const toggleFav = id => setFavs(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
 
       const addOrder = ord => {
-        const o = { ...ord, id: Date.now(), status: "confirmed", created: new Date().toISOString() };
-        setOrders(p => [o, ...p]);
-        const k = `${ord.movieId}_${ord.date}_${ord.time}`;
-        setSeats(p => ({ ...p, [k]: [...(p[k] || []), ...ord.seats] }));
-        return o;
+        const sessionKey = `${ord.movieId}_${ord.date}_${ord.time}`;
+        const alreadyOccupied = seats[sessionKey] || [];
+        
+        // בדיקה: האם אחד מהמושבים שבחרנו כבר קיים ברשימת התפוסים?
+        const isAlreadyTaken = ord.seats.some(sId => alreadyOccupied.includes(sId));
+
+        if (isAlreadyTaken) {
+          // מחזירים אובייקט שגיאה במקום הזמנה
+          return { error: true, message: "Sorry, some of these seats were just taken by someone else." };
+        }
+
+        const newOrder = { ...ord, id: Date.now(), status: "confirmed", created: new Date().toISOString() };
+        setOrders(prev => [newOrder, ...prev]);
+        setSeats(prev => ({ ...prev, [sessionKey]: [...(prev[sessionKey] || []), ...ord.seats] }));
+        
+        return { error: false, order: newOrder };
       };
       const getOcc = (mId, date, time) => seats[`${mId}_${date}_${time}`] || [];
 
@@ -2011,7 +2030,23 @@
         const n = [...f, { userId: user?.id, rating: r }];
         return { ...m, userRatings: n, rating: parseFloat((n.reduce((s, x) => s + x.rating, 0) / n.length).toFixed(1)) };
       }));
+      
+      // פונקציה לביטול הזמנה ושחרור מושבים
+      const cancelOrder = (orderId) => {
+        // 1. מוצאים את ההזמנה שרוצים לבטל כדי לדעת אילו מושבים לשחרר
+        const orderToCancel = orders.find(o => o.id === orderId);
+        if (!orderToCancel) return;
 
+        // 2. מסירים את ההזמנה מרשימת ההזמנות הכללית
+        setOrders(prev => prev.filter(o => o.id !== orderId));
+
+        // 3. משחררים את הכיסאות במפה (מפתח: מזהה סרט_תאריך_שעה)
+        const sessionKey = `${orderToCancel.movieId}_${orderToCancel.date}_${orderToCancel.time}`;
+        setSeats(prev => ({
+          ...prev,
+          [sessionKey]: (prev[sessionKey] || []).filter(sId => !orderToCancel.seats.includes(sId))
+        }));
+      };
       const userOrders = orders.filter(o => o.userId === user?.id);
 
       return (
@@ -2022,6 +2057,7 @@
           favs, toggleFav,
           dark, setDark,
           page, nav, selMov,
+          cancelOrder,
         }}>{children}</Ctx.Provider>
       );
     }
@@ -2469,7 +2505,37 @@
           return Object.keys(e).length === 0;
       };
 
-      const rows = ["A", "B", "C", "D", "E"];
+     const rows = ["A", "B", "C", "D", "E"];
+
+     const confirm = () => {
+        if (!valPay()) return;
+        
+        const orderData = {
+          userId: user.id,
+          movieId: movie.id,
+          movieTitle: movie.title,
+          moviePoster: movie.poster,
+          date,
+          time,
+          seats: selSeats.map(s => s.id),
+          ticketCount: cnt,
+          totalPrice: total
+        };
+        
+        const result = addOrder(orderData);
+        
+        if (result.error) {
+          // אם היתה כפילות, אנחנו עוצרים ומזהירים את המשתמש
+          alert(result.message);
+          // מאפסים את הבחירה כדי שהמשתמש יראה מה תפוס עכשיו
+          setSel([]); 
+          return;
+        }
+        
+        // אם הכל עבר בשלום, ממשיכים למסך הצלחה
+        setResult(result.order);
+        setStep("success");
+      };
 
       if (step === "success") return (
         <div className="page"><div className="container"><div className="bkcnt"><div className="card">
@@ -2512,11 +2578,35 @@
             </div>
             <h3 style={{ marginBottom: 13, marginTop: 18 }}>Select Time</h3>
             <div className="sttimes">
-              {movie.showtimes.map(t => (
-                <button key={t} className={`stbtn${time === t ? " act" : ""}`}
-                  onClick={() => { setTime(t); setSel([]) }}
-                  aria-label={`Time ${t}`} data-testid={`time-btn-${t.replace(":", "-")}`} aria-pressed={time === t} data-selected={time === t}>🕐 {t}</button>
-              ))}
+              {movie.showtimes.map(t => {
+                // 1. בדיקה האם התאריך שנבחר הוא היום
+                const isToday = date === new Date().toISOString().split("T")[0];
+                
+                // 2. פירוק שעת הסרט (למשל "10:30") למספרים
+                const [h, m] = t.split(":").map(Number);
+                const now = new Date();
+                
+                // 3. האם השעה עברה? (רלוונטי רק אם זה היום)
+                const isPastTime = isToday && (now.getHours() > h || (now.getHours() === h && now.getMinutes() > m));
+
+                return (
+                  <button 
+                    key={t} 
+                    className={`stbtn${time === t ? " act" : ""}`}
+                    // --- כאן נכנסת הלוגיקה החדשה ---
+                    disabled={isPastTime} 
+                    style={isPastTime ? { opacity: 0.3, cursor: 'not-allowed', textDecoration: 'line-through' } : {}}
+                    // ------------------------------
+                    onClick={() => { setTime(t); setSel([]) }}
+                    aria-label={`Time ${t}`} 
+                    data-testid={`time-btn-${t.replace(":", "-")}`} 
+                    aria-pressed={time === t} 
+                    data-selected={time === t}
+                  >
+                    {isPastTime ? "❌ " : "🕐 "}{t}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -2705,7 +2795,7 @@
 
       const val = () => {
         const e = {};
-        const nameRegex = /^[a-zA-Z\s]+$/; // אנגלית ורווחים בלבד
+        const nameRegex = /^[a-zA-Z\s]+$/;
       
         if (!f.name.trim()) e.name = "Full name is required";
         else if (f.name.length < 2 || f.name.length > 40) e.name = "Name must be 2-40 characters";
@@ -2713,6 +2803,11 @@
       
         if (!f.email.trim()) e.email = "Email is required";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Invalid email format";
+        // --- הבדיקה החדשה (לוגיקה בלבד) ---
+        else if (TEST_USERS.some(u => u.email.toLowerCase() === f.email.toLowerCase())) {
+          e.email = "This email is already registered";
+        }
+        // ----------------------------------
       
         if (!f.pwd) e.pwd = "Password is required";
         else if (f.pwd.length < 6 || f.pwd.length > 50) e.pwd = "Password must be 6-50 characters";
@@ -2762,41 +2857,74 @@
 
     // ── ORDERS ────────────────────────────────────────────────
     function Orders() {
-      const { user, userOrders, nav } = useApp();
+      const { user, userOrders, nav, cancelOrder } = useApp(); // משכנו את cancelOrder משלב 1
+      
       if (!user) return (
         <div className="page"><div className="container">
-          <div className="alert wrn">Please login to view your orders</div>
+          <div className="alert wrn" role="alert">Please login to view your orders</div>
           <button className="btn mt16" onClick={() => nav("login")}>Login</button>
         </div></div>
       );
+
+      const now = new Date();
+
       return (
         <div className="page"><div className="container">
           <h1 className="stitle mb24">My <span>Orders</span></h1>
           {userOrders.length === 0
-            ? <div className="emp"><div className="emp-ic">🎟</div><h3>No orders yet</h3><p>Book your first ticket!</p>
+            ? <div className="emp" role="status"><div className="emp-ic">🎟</div><h3>No orders yet</h3><p>Book your first ticket!</p>
               <button className="btn mt16" onClick={() => nav("movies")}>Browse Movies</button></div>
-            : <div className="ordgrid" data-testid="orders-list">
-              {userOrders.map(o => (
-                <div key={o.id} className="ordcard" data-testid={`order-${o.id}`} role="article" aria-label={`Order for ${o.movieTitle}`}>
-                  <img src={o.moviePoster} alt={o.movieTitle} className="ordpost" />
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 5 }}>{o.movieTitle}</div>
-                    <div className="tm" style={{ fontSize: 13 }}>📅 {o.date} at {o.time}</div>
-                    <div className="tm" style={{ fontSize: 13 }}>💺 Seats: {o.seats.join(", ")}</div>
-                    <div style={{ fontSize: 13, marginTop: 3 }}>🎟 {o.ticketCount} ticket{o.ticketCount > 1 ? "s" : ""}</div>
+            : <div className="ordgrid" role="list">
+              {userOrders.map(o => {
+                // לוגיקה שמפרידה בין עבר לעתיד
+                const orderDate = new Date(`${o.date}T${o.time}`);
+                const isPast = orderDate < now;
+
+                return (
+                  <div key={o.id} 
+                       className="ordcard" 
+                       data-order-status={isPast ? "past" : "future"} // מכנה משותף לאוטומציה
+                       style={isPast ? { opacity: 0.5, filter: 'grayscale(1)' } : {}} 
+                       role="listitem"
+                       aria-label={`Order for ${o.movieTitle}`}
+                  >
+                    <img src={o.moviePoster} alt={o.movieTitle} className="ordpost" />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 5 }}>
+                        {o.movieTitle} {isPast && <span style={{fontSize: 11, opacity: 0.6}}>(History)</span>}
+                      </div>
+                      <div className="tm" style={{ fontSize: 13 }}>📅 {o.date} at {o.time}</div>
+                      <div className="tm" style={{ fontSize: 13 }}>💺 Seats: {o.seats.join(", ")}</div>
+                    </div>
+                    
+                    <div style={{ textAlign: "right", display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <div style={{ fontWeight: 700, fontSize: 17, color: "var(--accent)", marginBottom: 8 }}>₪{o.totalPrice}</div>
+                      
+                      {isPast ? (
+                        <span className="ordst" name="status-label">Completed</span>
+                      ) : (
+                        <>
+                          <span className="ordst conf" name="status-label">✓ Confirmed</span>
+                          <button 
+                            className="btn dng sm" 
+                            name="cancel-booking-btn" // זיהוי לפי שם
+                            aria-label={`Cancel booking for ${o.movieTitle}`} // זיהוי נגישות ייחודי
+                            style={{padding: '5px 10px', fontSize: '11px', marginTop: '8px'}}
+                            onClick={() => { if(window.confirm("Cancel this booking?")) cancelOrder(o.id) }}
+                          >
+                            Cancel Order
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <div style={{ fontWeight: 700, fontSize: 17, color: "var(--accent)", marginBottom: 7 }}>₪{o.totalPrice}</div>
-                    <span className="ordst conf" data-testid={`order-status-${o.id}`}>✓ Confirmed</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           }
         </div></div>
       );
     }
-
     // ── ADMIN ─────────────────────────────────────────────────
     function Admin() {
       const { user, movies, addMovie, editMovie, delMovie, nav } = useApp();
@@ -3020,13 +3148,9 @@
           <div style={{ background: "var(--bg3)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", padding: "12px 0" }}>
             <div className="container" style={{ display: "flex", gap: 24, overflowX: "auto", scrollbarWidth: "none", flexWrap: "wrap" }}>
               {[
+                { label: "Premium", price: "₪65", note: "Row A" },
                 { label: "Standard", price: "₪50", note: "Rows B–D" },
-                { label: "Premium", price: "₪65", note: "Row A (front premium)" },
                 { label: "Back Row", price: "₪35", note: "Row E" },
-                { label: "Student", price: "₪40", note: "Valid ID required" },
-                { label: "Senior", price: "₪38", note: "65+" },
-                { label: "Child", price: "₪30", note: "Under 12" },
-                { label: "Family Pack", price: "₪180", note: "2 adults + 2 children" },
               ].map(p => (
                 <div key={p.label} style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
                   <div>
