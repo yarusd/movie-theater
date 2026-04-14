@@ -1948,8 +1948,20 @@
     const sl = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch { } };
 
     const getDates = () => Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(); d.setDate(d.getDate() + i);
-      return { date: d.toISOString().split("T")[0], label: d.toLocaleDateString("en", { weekday: "short" }), num: d.getDate() };
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      
+      // יצירת פורמט YYYY-MM-DD לפי הזמן המקומי (Local Time)
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const localDate = `${year}-${month}-${day}`;
+      
+      return { 
+        date: localDate, 
+        label: d.toLocaleDateString("en", { weekday: "short" }), 
+        num: d.getDate() 
+      };
     });
 
     // ── CONTEXT ───────────────────────────────────────────────
