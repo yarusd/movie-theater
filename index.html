@@ -2922,7 +2922,7 @@
                             name="cancel-booking-btn" // זיהוי לפי שם
                             aria-label={`Cancel booking for ${o.movieTitle}`} // זיהוי נגישות ייחודי
                             style={{padding: '5px 10px', fontSize: '11px', marginTop: '8px'}}
-                            onClick={() => { if(window.confirm("Cancel this booking?")) cancelOrder(o.id) }}
+                            onClick={() => cancelOrder(o.id)}
                           >
                             Cancel Order
                           </button>
